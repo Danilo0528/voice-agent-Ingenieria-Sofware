@@ -23,7 +23,7 @@ class ConversationTurn:
 class PipelineState:
     """Estado mutable del pipeline. Compartido entre todas las etapas.
 
-    Mejora post-architecture-checkpoint:
+        Mejora post-architecture-checkpoint:
     - update_stage() centraliza los cambios de estado (evita setattr disperso)
     - on_update callback opcional para notificar al frontend via WebSocket
     """
