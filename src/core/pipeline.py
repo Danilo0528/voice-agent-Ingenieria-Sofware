@@ -13,7 +13,7 @@ from typing import Protocol
 
 import structlog
 
-from src.core.state import PipelineState, StageStatus
+#from src.core.state import PipelineState, StageStatus
 
 logger = structlog.get_logger(__name__)
 
@@ -181,7 +181,7 @@ async def _demo() -> None:
 
     result = await pipeline.run(audio_bytes)
     print(f"Pipeline result: {len(result)} bytes de audio")
-    print(f"Historial de conversación:")
+    print("Historial de conversación:")
     for turn in pipeline.state.history:
         print(f"  {turn.role}: {turn.text}")
 
