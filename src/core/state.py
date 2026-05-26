@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Literal
+from typing import Callable, Literal, Optional
 
 
 class StageStatus(Enum):
@@ -21,7 +21,12 @@ class ConversationTurn:
 
 @dataclass
 class PipelineState:
-    """Estado mutable del pipeline. Compartido entre todas las etapas."""
+    """Estado mutable del pipeline. Compartido entre todas las etapas.
+
+    Mejora post-architecture-checkpoint:
+    - update_stage() centraliza los cambios de estado (evita setattr disperso)
+    - on_update callback opcional para notificar al frontend via WebSocket
+    """
 
     # Estado de cada etapa
     mic_status: StageStatus = StageStatus.IDLE
@@ -36,8 +41,21 @@ class PipelineState:
     # Si el pipeline está corriendo
     running: bool = False
 
+    # Callback opcional para notificar cambios (ej. WebSocket del frontend)
+    on_update: Optional[Callable[["PipelineState"], None]] = field(
+        default=None, repr=False
+    )
+
+    def update_stage(self, stage: str, status: StageStatus) -> None:
+        """Actualiza el estado de una etapa y notifica al listener si existe."""
+        setattr(self, f"{stage}_status", status)
+        if self.on_update:
+            self.on_update(self)
+
     def add_turn(self, role: Literal["user", "assistant"], text: str) -> None:
         self.history.append(ConversationTurn(role=role, text=text))
+        if self.on_update:
+            self.on_update(self)
 
     def reset(self) -> None:
         self.history.clear()
