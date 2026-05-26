@@ -89,3 +89,17 @@ class TestVoicePipeline:
         await pipeline.run(b"audio_1")
         await pipeline.run(b"audio_2")
         assert len(pipeline.state.history) == 4  # 2 user + 2 assistant
+
+    async def test_run_with_wav_file(self, pipeline):
+        import wave
+        import os
+        
+        wav_path = "tests/fixtures/test_audio.wav"
+        assert os.path.exists(wav_path)
+        
+        with wave.open(wav_path, "rb") as wav:
+            audio_bytes = wav.readframes(wav.getnframes())
+            
+        result = await pipeline.run(audio_bytes)
+        assert isinstance(result, bytes)
+        assert len(result) > 0
