@@ -13,7 +13,7 @@ from typing import Protocol
 
 import structlog
 
-#from src.core.state import PipelineState, StageStatus
+from src.core.state import PipelineState, StageStatus
 
 logger = structlog.get_logger(__name__)
 
