@@ -117,7 +117,7 @@ async def test_ollama_compatibility():
     base_url = "http://localhost:11434"
     with patch.dict("os.environ", {"OLLAMA_BASE_URL": base_url}):
         with patch("src.llm.chat.AsyncOpenAI") as mock_client_class:
-            llm = ConversationLLM()
+            ConversationLLM()
             
             # Assert
             from unittest.mock import ANY

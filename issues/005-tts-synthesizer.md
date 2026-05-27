@@ -9,11 +9,11 @@ Usar `pyttsx3` como motor local (sin API key, completamente offline).
 
 ## Criterios de Aceptación
 
-- [ ] `TTSSynthesizer.synthesize(text)` devuelve bytes de audio WAV
-- [ ] Funciona sin conexión a internet (motor local)
-- [ ] Configurable: velocidad de habla, voz (si hay múltiples disponibles)
-- [ ] Tests unitarios con mock de pyttsx3
-- [ ] Método async compatible con el pipeline asyncio
+- [x] `TTSSynthesizer.synthesize(text)` devuelve bytes de audio WAV
+- [x] Funciona sin conexión a internet (motor local)
+- [x] Configurable: velocidad de habla, voz (si hay múltiples disponibles)
+- [x] Tests unitarios con mock de pyttsx3
+- [x] Método async compatible con el pipeline asyncio
 
 ## Interface
 

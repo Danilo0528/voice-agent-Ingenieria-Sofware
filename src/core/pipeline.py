@@ -57,7 +57,7 @@ class VoicePipeline:
         self.llm = llm
         self.tts = tts
         self.state = state or PipelineState()
-        
+
         # Colas para conectar etapas
         self._stt_queue: asyncio.Queue[bytes] = asyncio.Queue()
         self._llm_queue: asyncio.Queue[str] = asyncio.Queue()
@@ -100,9 +100,9 @@ class VoicePipeline:
                 else:
                     log.info("stt_empty_transcript")
                     await self._out_queue.put(b"")
-            except Exception as e:
+            except Exception:
                 self.state.update_stage("stt", StageStatus.ERROR)
-                log.error("stt_failed", error=str(e))
+                log.exception("stt_failed")
                 await self._out_queue.put(b"")
             finally:
                 if self.state.stt_status != StageStatus.ERROR:
@@ -120,9 +120,9 @@ class VoicePipeline:
                 self.state.add_turn("assistant", response_text)
                 log.info("llm_done", response=response_text)
                 await self._tts_queue.put(response_text)
-            except Exception as e:
+            except Exception:
                 self.state.update_stage("llm", StageStatus.ERROR)
-                log.error("llm_failed", error=str(e))
+                log.exception("llm_failed")
                 await self._out_queue.put(b"")
             finally:
                 if self.state.llm_status != StageStatus.ERROR:
@@ -139,9 +139,9 @@ class VoicePipeline:
                 response_audio = await self.tts.synthesize(text)
                 log.info("tts_done", audio_bytes=len(response_audio))
                 await self._out_queue.put(response_audio)
-            except Exception as e:
+            except Exception:
                 self.state.update_stage("tts", StageStatus.ERROR)
-                log.error("tts_failed", error=str(e))
+                log.exception("tts_failed")
                 await self._out_queue.put(b"")
             finally:
                 if self.state.tts_status != StageStatus.ERROR:

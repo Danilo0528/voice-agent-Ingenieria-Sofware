@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import AsyncMock
 
 from src.core.pipeline import VoicePipeline
-from src.core.state import PipelineState, StageStatus
+from src.core.state import StageStatus
 
 
 @pytest.fixture
