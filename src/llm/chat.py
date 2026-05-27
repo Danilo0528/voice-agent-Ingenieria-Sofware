@@ -1,5 +1,8 @@
 import os
+from typing import Any
+
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 import structlog
 
 logger = structlog.get_logger()
@@ -14,7 +17,7 @@ class ConversationLLM:
         self.model = model
         self.system_prompt = system_prompt
         self.max_history = max_history
-        self.history: list[dict[str, str]] = []
+        self.history: list[dict[str, Any]] = []
         
         api_key = os.getenv("OPENAI_API_KEY", "sk-fake")
         base_url = os.getenv("OLLAMA_BASE_URL")
@@ -28,8 +31,8 @@ class ConversationLLM:
         # Añadir mensaje del usuario al historial
         self.history.append({"role": "user", "content": user_message})
             
-        messages = [{"role": "system", "content": self.system_prompt}]
-        messages.extend(self.history)
+        messages: list[ChatCompletionMessageParam] = [{"role": "system", "content": self.system_prompt}]
+        messages.extend(self.history) # type: ignore[arg-type]
         
         try:
             response = await self.client.chat.completions.create(

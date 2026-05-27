@@ -1,6 +1,8 @@
 import asyncio
 import os
 import tempfile
+from typing import Any
+
 import pyttsx3
 
 class TTSSynthesizer:
@@ -9,7 +11,7 @@ class TTSSynthesizer:
     def __init__(self, rate: int = 175, volume: float = 0.9, voice_id: str | None = None):
         """
         Inicializa el sintetizador.
-        
+
         Args:
             rate: Velocidad del habla.
             volume: Volumen (0.0 a 1.0).
@@ -21,27 +23,27 @@ class TTSSynthesizer:
 
     async def synthesize(self, text: str) -> bytes:
         """
-        Convierte texto a audio WAV de forma asíncrona.
-        
+        Sintetiza texto a audio WAV.
+
         Args:
             text: El texto a convertir.
-            
+
         Returns:
             Bytes del archivo WAV generado.
         """
         # Ejecutamos la lógica síncrona en un hilo aparte para no bloquear el loop
         return await asyncio.to_thread(self._synthesize_sync, text)
 
-    async def get_available_voices(self) -> list[dict[str, any]]:
+    async def get_available_voices(self) -> list[dict[str, Any]]:
         """
         Obtiene la lista de voces disponibles en el sistema.
-        
+
         Returns:
             Lista de diccionarios con la información de cada voz.
         """
         return await asyncio.to_thread(self._get_voices_sync)
 
-    def _get_voices_sync(self) -> list[dict[str, any]]:
+    def _get_voices_sync(self) -> list[dict[str, Any]]:
         """Lógica síncrona para obtener voces."""
         engine = pyttsx3.init()
         voices = engine.getProperty('voices')
