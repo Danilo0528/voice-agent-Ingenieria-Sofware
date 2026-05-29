@@ -45,4 +45,5 @@ class WhisperSTT:
         duration = time.time() - start_time
         logger.info("transcription_completed", duration_sec=round(duration, 3), model=self.model_name)
         
-        return result.get("text", "").strip()
+        text = result.get("text", "")
+        return str(text).strip()
