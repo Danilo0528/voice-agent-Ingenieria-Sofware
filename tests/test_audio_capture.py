@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import asyncio
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from src.audio.capture import VoiceActivityDetector, AudioCapture
 
 @pytest.mark.asyncio

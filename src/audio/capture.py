@@ -1,6 +1,5 @@
 import asyncio
 import math
-import numpy as np
 import sounddevice as sd
 import webrtcvad
 from typing import Optional
