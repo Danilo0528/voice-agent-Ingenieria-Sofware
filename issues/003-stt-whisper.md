@@ -9,12 +9,12 @@ localmente. Debe ser async-compatible para integrarse con el pipeline asyncio.
 
 ## Criterios de Aceptación
 
-- [ ] `WhisperSTT.transcribe(audio_bytes)` devuelve texto transcrito
-- [ ] Funciona con audio PCM en formato bytes (16-bit, 16kHz, mono)
-- [ ] Configurable: modelo "tiny" (rápido) o "base"/"small" (más preciso)
-- [ ] Tests unitarios con mock del modelo Whisper (no descarga el modelo en CI)
-- [ ] Manejo de errores cuando el audio es muy corto o silencioso
-- [ ] Logging del tiempo de transcripción para medir latencia
+- [x] `WhisperSTT.transcribe(audio_bytes)` devuelve texto transcrito
+- [x] Funciona con audio PCM en formato bytes (16-bit, 16kHz, mono)
+- [x] Configurable: modelo "tiny" (rápido) o "base"/"small" (más preciso)
+- [x] Tests unitarios con mock del modelo Whisper (no descarga el modelo en CI)
+- [x] Manejo de errores cuando el audio es muy corto o silencioso
+- [x] Logging del tiempo de transcripción para medir latencia
 
 ## Interface
 
