@@ -80,35 +80,33 @@ Tests de TTS mockean engine.save_to_file y engine.runAndWait.
 
 ---
 
-## Handoff #3 — Sesión 3 → Sesión 4
+## Handoff #4 — Sesión 4 → Sesión 5
 
 **Fecha:** Sprint 2  
-**Issues trabajadas:** #2 (VAD), #3 (STT Whisper)  
-**Cerradas:** #2 ✅, #3 ✅
+**Issues trabajadas:** #7 (CI)  
+**Cerradas:** #7 ✅
 
 ### ✅ Componentes Construidos
 
-- `src/audio/capture.py` — `VoiceActivityDetector` + `AudioCapture` con detección de fin de habla por 500ms de silencio
-- `src/stt/whisper_stt.py` — `WhisperSTT` con modelo configurable, conversión int16→float32, executor para no bloquear
-- `tests/test_audio_capture.py` — Tests con audio sintético numpy. 5 tests en verde ✅
-- `tests/test_stt.py` — Tests con mock del modelo Whisper. 6 tests en verde ✅
+- **Orquestación:** `VoicePipeline` (async) y `PipelineState` con hook `on_update` para el frontend.
+- **Audio/STT:** `AudioCapture` con VAD (30ms chunks) y `WhisperSTT` (modelo tiny, float32).
+- **Cerebro/Voz:** `ConversationLLM` (historial FIFO) y `TTSSynthesizer` (vía `run_in_executor`).
+- **Infra:** `.github/workflows/ci.yml` con linting (Ruff), tipos (Mypy) y tests (Pytest + Coverage).
 
 ### 🏗️ Decisiones de Arquitectura Consolidadas
 
-- **VAD chunks:** 30ms a 16kHz = 480 muestras int16 = 960 bytes exactos
-- **Fin de habla:** 500ms de silencio consecutivo = ~17 chunks de 30ms
-- **Whisper input:** numpy float32 normalizado entre -1.0 y 1.0
-- **Modelo por defecto:** "tiny" — suficiente para propósito educativo, ~150ms en CPU
+- **Reactividad:** `PipelineState.update_stage()` centralizado con callbacks para facilitar integración con WebSockets.
+- **Desacoplamiento:** Uso estricto de `typing.Protocol` para todos los proveedores de servicios.
+- **Eficiencia:** Procesamiento local (Whisper tiny) para baja latencia educativa.
 
 ### ⏳ Pendiente para Siguiente Sesión
 
-- Issue #6 (Panel Web) — **HITL** — requiere aprobación humana del diseño
-- Issue #7 (CI) — **desbloqueada** — puede resolver el agente
+- **Issue #6 (Panel Web):** Desarrollo del servidor API (FastAPI) y la interfaz de usuario. Es el último bloque mayor del MVP.
 
 ### ⚠️ Contexto Crítico
 
 ```
-webrtcvad requiere bytes exactos: 960 bytes para 30ms a 16000Hz.
-Audio más corto que 0.5s puede generar alucinaciones en Whisper — filtrar.
-El modelo Whisper se carga una sola vez en __init__, NO en cada transcripción.
+El CI requiere libportaudio2 (instalado en el workflow). 
+Todos los módulos de IA/Voz corren en executors para no congelar el loop de asyncio.
+El pipeline está listo para ser consumido por un servidor web.
 ```
