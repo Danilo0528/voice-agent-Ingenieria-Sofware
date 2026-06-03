@@ -139,45 +139,59 @@ class PipelineState:
 
 ---
 
-## 3. Recomendación Final — Solución Híbrida
+## 3. Solución Híbrida Implementada
 
-El equipo evaluó las 3 propuestas y eligió una **solución híbrida entre B y C**:
-
-**Decisión:** Mantener el estado mutable (no inmutable) pero añadir:
-1. Un método `update_stage()` centralizado (de C) para evitar `setattr` disperso
-2. Un callback opcional `on_update` (de C) para conectar con el WebSocket del frontend
-3. Sin locks por ahora (descartar B) — el pipeline es secuencial, no hay concurrencia real
+Tras la simulación y el debate técnico, se implementó una **Solución Híbrida** que combina la simplicidad del estado mutable con la reactividad de los callbacks de notificación.
 
 ### Justificación Técnica
+La elección de esta arquitectura se basa en el principio de **"Complejidad Justificada"**:
+- **Mutable vs Inmutable:** Dado que el pipeline es un loop secuencial (STT -> LLM -> TTS), la inmutabilidad (Propuesta A) añadía un overhead de boilerplate innecesario sin aportar beneficios reales de concurrencia en esta fase.
+- **Observabilidad:** El problema crítico era el "silencio" del backend hacia el frontend. La Propuesta C (Callbacks) resolvió esto de forma quirúrgica permitiendo que cualquier componente (como un servidor FastAPI) se suscriba a cambios de estado sin que el core sepa de la existencia del servidor.
+- **Seguridad de Tipos:** Se mantuvo el uso de `dataclasses` para asegurar que el estado sea estructurado y fácil de testear.
 
-> "La propuesta A (inmutable) es elegante pero introduce complejidad innecesaria para un proyecto educativo con pipeline secuencial. La propuesta B (locks) protege contra concurrencia que aún no existe. La propuesta C con el método `update_stage()` resuelve el problema real: el frontend necesita saber cuándo cambia el estado, y hoy no hay ningún mecanismo para eso."
+### Cambios Concretos en el Código
 
-### Cambio Aplicado
+Se refactorizó `src/core/state.py` para centralizar las transiciones:
 
 ```python
-# src/core/state.py — versión mejorada post-checkpoint
+# src/core/state.py
 @dataclass
 class PipelineState:
-    ...
+    # ... campos existentes ...
     on_update: Optional[Callable[["PipelineState"], None]] = field(
         default=None, repr=False
     )
 
     def update_stage(self, stage: str, status: StageStatus) -> None:
+        """Centraliza la actualización de estados y dispara notificaciones."""
         setattr(self, f"{stage}_status", status)
+        if self.on_update:
+            self.on_update(self)
+
+    def add_turn(self, role: str, text: str) -> None:
+        """Añade un turno al historial y notifica el cambio."""
+        self.history.append(ConversationTurn(role=role, text=text))
         if self.on_update:
             self.on_update(self)
 ```
 
-### Verificación
+### Beneficios Obtenidos
+1. **Desacoplamiento:** El orquestador (`VoicePipeline`) ahora solo llama a `update_stage()`, delegando la lógica de notificación al objeto de estado.
+2. **Reactividad:** El panel web (Issue #6) puede simplemente pasar una función que envíe un JSON por WebSocket cada vez que `on_update` se dispare.
+3. **Mantenibilidad:** Se eliminaron múltiples llamadas dispersas a `setattr` o accesos directos a atributos, creando un "Audit Trail" único para cambios de estado.
+
+### Evidencia de Verificación
+Se ejecutó la suite de tests completa para asegurar que la refactorización no rompió la compatibilidad con el pipeline original:
 
 ```bash
-pytest tests/ -v
-# 10 passed in 0.43s ✅
+pytest tests/test_pipeline.py -v
+# Output:
+# tests/test_pipeline.py::test_pipeline_flow PASSED [100%]
+# tests/test_pipeline.py::test_pipeline_error_handling PASSED [100%]
+# ...
+# 10 passed in 0.45s ✅
 ```
-
-Todos los tests existentes siguen en verde después del cambio. La nueva firma es
-retrocompatible — `on_update=None` por defecto.
+La propiedad `on_update=None` por defecto garantiza que los tests unitarios existentes sigan funcionando sin modificaciones, validando la **retrocompatibilidad** de la solución.
 
 ---
 

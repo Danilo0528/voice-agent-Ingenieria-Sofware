@@ -28,21 +28,21 @@ lo que hace el sistema completamente observable y modificable.
 voice-agent/
 ├── src/
 │   ├── core/
-│   │   ├── pipeline.py      # Orquestador principal del loop
-│   │   └── state.py         # Estado compartido de la conversación
+│   │   ├── pipeline.py      # Orquestador principal del loop (✅ LISTO)
+│   │   └── state.py         # Estado compartido de la conversación (✅ LISTO)
 │   ├── audio/
-│   │   ├── capture.py       # Captura micrófono + VAD
-│   │   └── playback.py      # Reproducción de audio
+│   │   ├── capture.py       # Captura micrófono + VAD (✅ LISTO)
+│   │   └── playback.py      # Reproducción de audio (⏳ PENDIENTE)
 │   ├── stt/
-│   │   └── whisper_stt.py   # Speech-to-Text (Whisper local)
+│   │   └── whisper_stt.py   # Speech-to-Text (Whisper local) (✅ LISTO)
 │   ├── llm/
-│   │   └── chat.py          # Cliente LLM (OpenAI / Ollama)
+│   │   └── chat.py          # Cliente LLM (OpenAI / Ollama) (✅ LISTO)
 │   ├── tts/
-│   │   └── synthesizer.py   # Text-to-Speech
+│   │   └── synthesizer.py   # Text-to-Speech (✅ LISTO)
 │   └── api/
-│       └── server.py        # FastAPI + WebSockets (frontend)
+│       └── server.py        # FastAPI + WebSockets (⏳ PRÓXIMAMENTE)
 ├── frontend/
-│   └── index.html           # Panel de monitoreo en tiempo real
+│   └── index.html           # Panel de monitoreo (⏳ PRÓXIMAMENTE)
 ├── tests/
 │   ├── test_pipeline.py
 │   ├── test_stt.py

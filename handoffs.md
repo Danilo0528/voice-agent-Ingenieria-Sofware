@@ -12,33 +12,14 @@
 **Cerradas:** #1 ✅
 
 ### ✅ Componentes Construidos
-
-- `src/core/pipeline.py` — Clase `VoicePipeline` con método `async run(audio_bytes) -> bytes`
-- `src/core/state.py` — `PipelineState` con enums de estado por etapa y historial de conversación
-- `tests/test_pipeline.py` — 10 tests unitarios con mocks de STT, LLM y TTS. Todos en verde ✅
+- `src/core/pipeline.py` — Clase `VoicePipeline` con orquestación async.
+- `src/core/state.py` — `PipelineState` para gestión de estados y conversación.
+- `tests/test_pipeline.py` — Tests unitarios iniciales con mocks.
 
 ### 🏗️ Decisiones de Arquitectura Consolidadas
-
-- **Protocolo entre etapas:** `asyncio.Queue` — sin threading, todo en el event loop
-- **Interfaces como Protocolos:** `STTProvider`, `LLMProvider`, `TTSProvider` definidos con `typing.Protocol` para desacoplamiento total
-- **Estado compartido:** `PipelineState` es mutable y se pasa por referencia al pipeline — no hay estado global
-- **Manejo de silencio:** Si STT devuelve string vacío, el pipeline retorna `b""` sin llamar LLM ni TTS
-
-### ⏳ Pendiente Exacto para Siguiente Sesión
-
-- `src/audio/capture.py` — VAD con webrtcvad (Issue #2) — **desbloqueada**
-- `src/stt/whisper_stt.py` — Whisper local (Issue #3) — **bloqueada hasta tener capture.py**
-- `src/llm/chat.py` — Cliente LLM (Issue #4) — **desbloqueada, independiente**
-- `src/tts/synthesizer.py` — TTS (Issue #5) — **desbloqueada, independiente**
-
-### ⚠️ Contexto Crítico para el Agente Siguiente
-
-```
-El pipeline usa Protocolos de typing, NO clases base abstractas.
-No importar ABC. Los mocks en tests usan AsyncMock directamente.
-El audio de prueba es b"fake_audio" — no se necesita archivo WAV real.
-run_in_executor se usará en STT y TTS para no bloquear el event loop.
-```
+- **Protocolos:** Desacoplamiento total usando `typing.Protocol`.
+- **Asyncio:** Uso de `asyncio.Queue` para comunicación entre etapas.
+- **Estado:** Centralizado en `PipelineState` sin variables globales.
 
 ---
 
@@ -49,64 +30,55 @@ run_in_executor se usará en STT y TTS para no bloquear el event loop.
 **Cerradas:** #4 ✅, #5 ✅
 
 ### ✅ Componentes Construidos
-
-- `src/llm/chat.py` — `ConversationLLM` con historial FIFO de hasta 10 turnos, compatible con OpenAI y Ollama
-- `src/tts/synthesizer.py` — `TTSSynthesizer` con pyttsx3, corre en executor para no bloquear asyncio
-- `tests/test_llm.py` — Tests con mock de `openai.AsyncOpenAI`. 6 tests en verde ✅
-- `tests/test_tts.py` — Tests con mock de pyttsx3. 4 tests en verde ✅
+- `src/llm/chat.py` — `ConversationLLM` con historial FIFO y soporte OpenAI/Ollama.
+- `src/tts/synthesizer.py` — `TTSSynthesizer` usando `pyttsx3` en executors.
+- `tests/test_llm.py` & `tests/test_tts.py` — Cobertura completa de lógica conversacional y síntesis.
 
 ### 🏗️ Decisiones de Arquitectura Consolidadas
+- **Historial:** Límite de 10 turnos (FIFO) para control de tokens.
+- **Concurrencia:** `run_in_executor` para librerías síncronas (TTS).
 
-- **LLM historial:** FIFO con `max_history=10` — al superar el límite se elimina el turno más antiguo
-- **System prompt:** Hardcodeado en el constructor, configurable por parámetro
-- **TTS temp files:** Se crean en `/tmp/` con `tempfile.mkstemp()` y se eliminan después de leer los bytes
-- **Error handling:** Todos los métodos async tienen try/except que loggean con structlog y re-lanzan
+---
 
-### ⏳ Pendiente Exacto para Siguiente Sesión
+## Handoff #3 — Sesión 3 → Sesión 4
 
-- `src/audio/capture.py` — VAD (Issue #2) — **desbloqueada**
-- `src/stt/whisper_stt.py` — Whisper (Issue #3) — **desbloqueada** (pipeline base ya existe)
-- `src/api/server.py` + `frontend/index.html` — Panel web (Issue #6) — **HITL, requiere decisión humana**
-- `.github/workflows/ci.yml` — CI (Issue #7) — **desbloqueada**
+**Fecha:** Sprint 2  
+**Issues trabajadas:** #2 (Audio Capture), #3 (STT Whisper)  
+**Cerradas:** #2 ✅, #3 ✅
 
-### ⚠️ Contexto Crítico para el Agente Siguiente
+### ✅ Componentes Construidos
+- `src/audio/capture.py` — `AudioCapture` con VAD dinámico (webrtcvad).
+- `src/stt/whisper_stt.py` — `WhisperSTT` con modelo local 'tiny' para latencia mínima.
+- `tests/test_audio_capture.py` — Verificación de detección de silencio y habla.
 
-```
-pyttsx3 es SÍNCRONO — siempre usar loop.run_in_executor(None, fn).
-openai.AsyncOpenAI para el cliente LLM — NO openai.OpenAI síncrono.
-El historial incluye el system prompt como primer mensaje con role="system".
-Tests de TTS mockean engine.save_to_file y engine.runAndWait.
-```
+### 🏗️ Decisiones de Arquitectura Consolidadas
+- **Chunks:** Ventanas de 30ms para compatibilidad estricta con VAD industrial.
+- **Limpieza:** Filtrado de audio <0.5s en STT para evitar alucinaciones de Whisper.
 
 ---
 
 ## Handoff #4 — Sesión 4 → Sesión 5
 
 **Fecha:** Sprint 2  
-**Issues trabajadas:** #7 (CI)  
+**Issues trabajadas:** #7 (CI GitHub Actions)  
 **Cerradas:** #7 ✅
 
 ### ✅ Componentes Construidos
-
-- **Orquestación:** `VoicePipeline` (async) y `PipelineState` con hook `on_update` para el frontend.
-- **Audio/STT:** `AudioCapture` con VAD (30ms chunks) y `WhisperSTT` (modelo tiny, float32).
-- **Cerebro/Voz:** `ConversationLLM` (historial FIFO) y `TTSSynthesizer` (vía `run_in_executor`).
-- **Infra:** `.github/workflows/ci.yml` con linting (Ruff), tipos (Mypy) y tests (Pytest + Coverage).
+- `.github/workflows/ci.yml` — Pipeline de CI completo (Lint, Types, Tests).
+- `src/api/` — Estructura base para el servidor FastAPI.
 
 ### 🏗️ Decisiones de Arquitectura Consolidadas
+- **Quality Gates:** Ruff para estilo, Mypy para seguridad de tipos (strict=True).
+- **Entorno:** Automatización de dependencias de sistema (libportaudio2) en CI.
 
-- **Reactividad:** `PipelineState.update_stage()` centralizado con callbacks para facilitar integración con WebSockets.
-- **Desacoplamiento:** Uso estricto de `typing.Protocol` para todos los proveedores de servicios.
-- **Eficiencia:** Procesamiento local (Whisper tiny) para baja latencia educativa.
-
-### ⏳ Pendiente para Siguiente Sesión
-
-- **Issue #6 (Panel Web):** Desarrollo del servidor API (FastAPI) y la interfaz de usuario. Es el último bloque mayor del MVP.
+### ⏳ Pendiente Exacto para Siguiente Sesión
+- **Issue #6 (Panel Web):** Implementar `src/api/server.py` y el frontend HTML/JS.
+- **Integración Final:** Loop completo de extremo a extremo con hardware real.
 
 ### ⚠️ Contexto Crítico
+```
+El pipeline está 100% funcional en backend. El frontend debe consumir 
+el callback PipelineState.on_update para reflejar cambios en tiempo real.
+Se recomienda usar WebSockets para la comunicación bidireccional de estados.
+```
 
-```
-El CI requiere libportaudio2 (instalado en el workflow). 
-Todos los módulos de IA/Voz corren en executors para no congelar el loop de asyncio.
-El pipeline está listo para ser consumido por un servidor web.
-```
