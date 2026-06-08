@@ -1,5 +1,11 @@
 # 🎙️ VoiceAgent — Agente de Voz Conversacional Mínimo
 
+## 📖 Software Journey - Entrega Final (Tarea 3)
+
+La bitácora completa del proyecto y auditoría arquitectónica está aquí:
+
+→ **[Ver Software Journey](/docs/index.md)**
+
 > Python puro · asyncio · Sin frameworks de voz · Arquitectura observable
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
